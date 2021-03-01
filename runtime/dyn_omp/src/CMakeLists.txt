@@ -14,3 +14,5 @@ add_executable(dyn_omp ${SRCS})
 
 target_include_directories(dyn_omp PRIVATE ../include)
 target_link_libraries(dyn_omp fhe_fv ${LIBS})
+
+target_link_libraries(dyn_omp engine)

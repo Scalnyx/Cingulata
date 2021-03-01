@@ -35,6 +35,14 @@
 #include <thread>
 #include <chrono>
 
+//#define SIMPLX
+
+#ifdef SIMPLX
+#include "simplx.h"
+using namespace tredzone;
+#endif
+
+
 using namespace std;
 using namespace std::chrono;
 namespace po = boost::program_options;
@@ -222,6 +230,9 @@ void readClearInputsFile(unordered_map<string, bool>& clearInps, const Options& 
   file.close();
 }
 
+
+
+
 int main(int argc, char **argv)
 {
   /* Parse command line options */
@@ -305,18 +316,61 @@ int main(int argc, char **argv)
 
   steady_clock::time_point start = steady_clock::now();
 
-  /* Create threads and start homomorphic executors */
-  vector<thread> ths;
-  for (int i = 0; i < options.nrThreads; i++) {
-    ths.push_back(thread(doWork));
+
+# ifdef SIMPLX
+
+  class SimplxWorker : public Actor, public Actor::Callback
+  {
+      std::function<void ()> lambda;
+      bool m_Done;
+  public:
+      SimplxWorker(std::function<void ()> lmd)
+      {
+        lambda = lmd;
+        registerCallback(*this);
+      } 
+      void onCallback()
+      {
+        cout << "SimplxWorker::start()" << endl;
+        lambda();
+        m_Done = true;
+        requestDestroy();
+        cout << "SimplxWorker::stop()" << endl;
+      }
+      void onDestroyRequest(void) noexcept override
+      {
+          if (m_Done) acceptDestroy();
+          else        requestDestroy();
+      }
+  };
+
+
+  Engine::StartSequence startSequence;
+  startSequence.addActor<SimplxWorker>(1,doWork);
+  startSequence.addActor<SimplxWorker>(2,doWork);
+ // startSequence.addActor<SimplxWorker>(3,doWork);
+  {
+    Engine	engine(startSequence);  
+
+# else
+
+    /* Create threads and start homomorphic executors */
+    vector<thread> ths;
+    for (int i = 0; i < options.nrThreads; i++) {
+      ths.push_back(thread(doWork));
+    }
+# endif
+
+    /* Start scheduling */
+    sched->doSchedule();
+
+# ifdef SIMPLX
   }
-
-  /* Start scheduling */
-  sched->doSchedule();
-
+# else
   for (int i = 0; i < options.nrThreads; i++) {
     ths[i].join();
   }
+# endif
 
   duration<double> execTime =
       duration_cast<duration<double>>(steady_clock::now() - start);

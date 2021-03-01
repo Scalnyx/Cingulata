@@ -7,3 +7,6 @@
 [submodule "cinguparam"]
 	path = submodules/CinguParam
 	url = https://github.com/CEA-LIST/CinguParam.git
+[submodule "simplx"]
+	path = simplx
+	url = git@github.com:Scalnyx/simplx.git

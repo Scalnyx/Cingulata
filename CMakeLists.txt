@@ -36,8 +36,15 @@ endif(ENABLE_UNITTEST)
 
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/common/include)
 
+
 add_subdirectory(submodules)
 add_subdirectory(common)
+
+
+include("simplx/common_simplx.cmake")
+trz_set_cxx_flags()
+trz_add_topdir(src/engine)
+
 
 message("BUILD_DOC                  " ${BUILD_DOC})
 message("BUILD_ONLY_COMMON          " ${BUILD_ONLY_COMMON})
@@ -56,7 +63,6 @@ if(NOT ${BUILD_ONLY_COMMON})
   endif(USE_BFV)
 
   add_subdirectory(runtime)
-
   include_directories(circuit/include) # support old circuit interface
   include_directories(${COMMON_INCLUDE_DIR})
   add_subdirectory(tests)
